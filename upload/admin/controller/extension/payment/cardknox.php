@@ -95,7 +95,35 @@ class ControllerExtensionPaymentCardknox extends Controller {
 
 		$data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
 
+		
+		if (isset($this->request->post['payment_cardknox_geo_zone_id'])) {
+			$data['payment_cardknox_geo_zone_id'] = $this->request->post['payment_cardknox_geo_zone_id'];
+		} else {
+			$data['payment_cardknox_geo_zone_id'] = $this->config->get('payment_cardknox_geo_zone_id');
+		}
 
+		$this->load->model('localisation/geo_zone');
+
+		$data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
+		
+		if (isset($this->request->post['payment_cardknox_card'])) {
+			$data['payment_cardknox_card'] = $this->request->post['payment_cardknox_card'];
+		} else {
+			$data['payment_cardknox_card'] = $this->config->get('payment_cardknox_card');
+		}
+		
+		if (isset($this->request->post['payment_cardknox_debug'])) {
+			$data['payment_cardknox_debug'] = $this->request->post['payment_cardknox_debug'];
+		} else {
+			$data['payment_cardknox_debug'] = $this->config->get('payment_cardknox_debug');
+		}
+		
+		if (isset($this->request->post['payment_cardknox_fraud'])) {
+			$data['payment_cardknox_fraud'] = $this->request->post['payment_cardknox_fraud'];
+		} else {
+			$data['payment_cardknox_fraud'] = $this->config->get('payment_cardknox_fraud');
+		}
+		
 		if (isset($this->request->post['payment_cardknox_status'])) {
 			$data['payment_cardknox_status'] = $this->request->post['payment_cardknox_status'];
 		} else {
@@ -113,6 +141,30 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		$data['footer'] = $this->load->controller('common/footer');
 
 		$this->response->setOutput($this->load->view('extension/payment/cardknox', $data));
+	}
+	
+	
+	public function install() {
+		$this->db->query("CREATE TABLE ".DB_PREFIX."cardknox_card (customer_card_id int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, customer_id int(11) NOT NULL, token varchar(128) NOT NULL, exp varchar(4), pan varchar(24), `card_type` varchar(24))");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN token varchar(128)");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN ref_num varchar(64)");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN payment_mode enum('capture','auth','card') default null");
+		// set up event handlers
+		$this->load->model('setting/event');
+		// cleanup after order place/logout
+		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/checkout/success/after', 'event/cardknox/clean');
+		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/account/logout/after', 'event/cardknox/clean');
+		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/account/login/after', 'event/cardknox/clean');
+	}
+	
+	public function uninstall() {
+		$this->db->query("DROP TABLE ".DB_PREFIX."cardknox_card");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN token");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN ref_num");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN payment_mode");
+		// Remove event handlers
+		$this->load->model('setting/event');
+		$this->model_setting_event->deleteEventByCode('cardknox');
 	}
 
 	protected function validate() {

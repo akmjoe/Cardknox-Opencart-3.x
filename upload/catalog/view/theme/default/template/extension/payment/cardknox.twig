@@ -1,52 +1,84 @@
 <form class="form-horizontal" id="payment">
     <fieldset>
         <legend>{{ text_credit_card }}</legend>
-        <div class="form-group required">
-            <label class="col-sm-2 control-label" for="input-cc-owner">{{ entry_cc_owner }}</label>
-            <div class="col-sm-10">
-                <input type="text" name="cc_owner" value="" placeholder="{{ entry_cc_owner }}" id="input-cc-owner" class="form-control"/>
-            </div>
-        </div>
-        <div class="form-group required">
-            <label class="col-sm-2 control-label" for="input-cc-number">{{ entry_cc_number }}</label>
-            <div class="col-sm-10">
-                <iframe data-ifields-id="card-number" data-ifields-placeholder="Card Number" frameborder="0" height="34" src="https://cdn.cardknox.com/ifields/2.5.1905.0801/ifield.htm" width="100%"></iframe>
-                <input data-ifields-id="card-number-token" name="xCardNum" type="hidden"/>
-                <br/>
-            </div>
-        </div>
-        <div class="form-group required">
-            <label class="col-sm-2 control-label" for="input-cc-expire-date">{{ entry_cc_expire_date }}</label>
-            <div class="col-sm-3">
-                <select class="form-control" id="input-cc-expire-date" name="cc_expire_date_month">
-
-                    {% for month in months %}
-
-                        <option value="{{ month.value }}">{{ month.text }}</option>
-
+        {% if cards %}
+        {# Show saved cards #}
+        <div class="radio">
+            <label><input type="radio" name="cc_from" value="existing" checked="checked">{{ text_existing }} <a href="{{ manage }}" target="_blank">{{ text_manage }}</a></label>
+            <div id="cc-existing">
+                <select class="form-control" name="cc_id" id="input-cc-id">
+                    {% for card in cards %}
+                        <option value="{{ card.id }}">{{ card.text }}</option>    
                     {% endfor %}
-
-                </select>
-            </div>
-            <div class="col-sm-3">
-                <select class="form-control" name="cc_expire_date_year">
-
-                    {% for year in year_expire %}
-
-                        <option value="{{ year.value }}">{{ year.text }}</option>
-
-                    {% endfor %}
-
                 </select>
             </div>
         </div>
-        <div class="form-group required">
-            <label class="col-sm-2 control-label" for="input-cc-cvv2">{{ entry_cc_cvv2 }}</label>
-            <div class="col-sm-10">
-                <iframe data-ifields-id="cvv" data-ifields-placeholder="CVV" frameborder="0" height="34" src="https://cdn.cardknox.com/ifields/2.5.1905.0801/ifield.htm" width="100%"></iframe>
-                <input data-ifields-id="cvv-token" name="xCVV" type="hidden"/>
-                <label data-ifields-id="card-data-error" id="ifieldsError"></label>
+        <div class="radio">
+            <label><input type="radio" name="cc_from" value="new">{{ text_new }}</label>
+        </div>
+        {% else %}
+        <input type="hidden" name="cc_from" value="new">
+        {% endif %}
+        <div id="cc-new" style="display:{% if cards %}none{% else %}block{% endif %};">
+            <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-cc-owner">{{ entry_cc_owner }}</label>
+                <div class="col-sm-10">
+                    <input type="text" name="cc_owner" value="" placeholder="{{ entry_cc_owner }}" id="input-cc-owner" class="form-control"/>
+                </div>
             </div>
+            <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-cc-number">{{ entry_cc_number }}</label>
+                <div class="col-sm-10">
+                    <iframe data-ifields-id="card-number" data-ifields-placeholder="Card Number" frameborder="0" height="34" src="https://cdn.cardknox.com/ifields/2.5.1905.0801/ifield.htm" width="100%"></iframe>
+                    <input data-ifields-id="card-number-token" name="xCardNum" type="hidden"/>
+                    <br/>
+                </div>
+            </div>
+            <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-cc-expire-date">{{ entry_cc_expire_date }}</label>
+                <div class="col-sm-3">
+                    <select class="form-control" id="input-cc-expire-date" name="cc_expire_date_month">
+
+                        {% for month in months %}
+
+                            <option value="{{ month.value }}">{{ month.text }}</option>
+
+                        {% endfor %}
+
+                    </select>
+                </div>
+                <div class="col-sm-3">
+                    <select class="form-control" name="cc_expire_date_year">
+
+                        {% for year in year_expire %}
+
+                            <option value="{{ year.value }}">{{ year.text }}</option>
+
+                        {% endfor %}
+
+                    </select>
+                </div>
+            </div>
+            <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-cc-cvv2">{{ entry_cc_cvv2 }}</label>
+                <div class="col-sm-10">
+                    <iframe data-ifields-id="cvv" data-ifields-placeholder="CVV" frameborder="0" height="34" src="https://cdn.cardknox.com/ifields/2.5.1905.0801/ifield.htm" width="100%"></iframe>
+                    <input data-ifields-id="cvv-token" name="xCVV" type="hidden"/>
+                    <label data-ifields-id="card-data-error" id="ifieldsError"></label>
+                </div>
+            </div>
+            {% if card_save_option %}
+            <div class="form-group">
+              <div class="col-sm-10">
+                <label class="checkbox-inline" for="input-cc-save">
+                    <input type="checkbox" name="cc_save" value="1" id="input-cc-save" {% if card_save %}checked="checked"{% endif %} />
+                    {{ entry_cc_save }}
+                </label>
+              </div>
+            </div>
+            {% elseif card_save %}
+            <input type="hidden" name="cc_save" value="1" />
+            {% endif %}
         </div>
     </fieldset>
 </form>
@@ -58,6 +90,15 @@
 <script
     type="text/javascript">
     <!--
+    $('input[name=\'cc_from\']').on('change', function() {
+	if (this.value == 'new') {
+		$('#cc-existing').hide();
+		$('#cc-new').show();
+	} else {
+		$('#cc-existing').show();
+		$('#cc-new').hide();
+	}
+    });
     var token = "{{ cardknox_token_key }}";
     var head = document.getElementsByTagName('head')[0];
     var script = document.createElement('script');
@@ -78,28 +119,17 @@
         };
         setIfieldStyle('card-number', style);
         setIfieldStyle('cvv', style);
+        enableAutoFormatting("-");
     }
     script.src = 'https://cdn.cardknox.com/ifields/2.5.1905.0801/ifields.min.js';
     head.appendChild(script);
     $('#button-confirm').on('click', function (event) {
         event.preventDefault();
-        getTokens(function () {
-            // onSuccess
-            // perform your own validation here...
-            if ($("input[name=xCardNum]").val() === '') {
-                alert("Card number required");
-                event.preventDefault = false;
-                return;
-            }
-            if ($("input[name=xCVV]").val() === '') {
-                alert("CVV rquired");
-                event.preventDefault = false;
-                return;
-            }
+        if($('input[name=\'cc_from\']:checked').val() == 'existing') {// saved card
             $.ajax({
                 url: 'index.php?route=extension/payment/cardknox/send',
                 type: 'post',
-                data: $('#payment :input'),
+                data: $('#payment input[type=\'text\'], #payment input[type=\'hidden\'], #payment input[type=\'checkbox\']:checked, #payment input[type=\'radio\']:checked, #payment select'),
                 dataType: 'json',
                 cache: false,
                 beforeSend: function () {
@@ -117,24 +147,68 @@
                     }
                 }
             });
-        }, function () { // onError
-            $.ajax({
-                url: 'index.php?route=extension/payment/cardknox/error',
-                type: 'post',
-                data: {
-                    error: document.getElementById('ifieldsError').textContent
-                },
-                dataType: 'json',
-                cache: false,
-                beforeSend: function () {},
-                success: function (json) {}
-            });
+        } else {// new card - get token & save
+            getTokens(function () {
+                // onSuccess
+                var D = new Date();
+                if (parseInt($("select[name=cc_expire_date_month]").val()) < D.getMonth()+1 && parseInt($("select[name=cc_expire_date_year]").val()) == D.getFullYear()) {
+                    alert("Card is expired!");
+                    event.preventDefault = false;
+                    return;
+                }
+                // perform your own validation here...
+                if ($("input[name=xCardNum]").val() === '') {
+                    alert("Card number required!");
+                    event.preventDefault = false;
+                    return;
+                }
+                if ($("input[name=xCVV]").val() === '') {
+                    alert("CVV rquired!");
+                    event.preventDefault = false;
+                    return;
+                }
+                $.ajax({
+                    url: 'index.php?route=extension/payment/cardknox/send',
+                    type: 'post',
+                    data: $('#payment input[type=\'text\'], #payment input[type=\'hidden\'], #payment input[type=\'checkbox\']:checked, #payment input[type=\'radio\']:checked, #payment select'),
+                    dataType: 'json',
+                    cache: false,
+                    beforeSend: function () {
 
-            alert(document.getElementById('ifieldsError').textContent);
-            event.preventDefault = false;
-            return;
-        },
-        // 30 second timeout
-            30000);
+                        $('#button-confirm').button('loading');
+                    },
+                    complete: function () {
+                        $('#button-confirm').button('reset');
+                    },
+                    success: function (json) {
+                        if (json['error']) {
+                            alert(json['error']);
+                        } else if (json['redirect']) {
+                            location = json['redirect'];
+                        }
+                    }
+                });
+            },// end success callback
+            function () { // onError
+                    $.ajax({
+                        url: 'index.php?route=extension/payment/cardknox/error',
+                        type: 'post',
+                        data: {
+                            error: document.getElementById('ifieldsError').textContent
+                        },
+                        dataType: 'json',
+                        cache: false,
+                        beforeSend: function () {},
+                        success: function (json) {}
+                    });
+
+                    alert(document.getElementById('ifieldsError').textContent);
+                    event.preventDefault = false;
+                    return;
+            },// end error callback
+            // 30 second timeout
+            30000
+            );
+        }
     });
     //--></script>
