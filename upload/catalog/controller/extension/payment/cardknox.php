@@ -155,7 +155,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 					$message .= 'Status: ' . $response_info['xStatus'] . "\n";;
 				}
 				// now save transaction info
-				$this->db->query("update ".DB_PREFIX."order set token = '".$this->db->escape($response_info['xToken'])."', ref_num = '".$this->db->escape($response_info['xRefNum'])."', payment_mode = '".($this->config->get('payment_cardknox_method') == 'capture'? '': 'auth')."' where order_id = ".(int)$this->session->data['order_id']);
+				$this->db->query("update ".DB_PREFIX."order set cardknox_token = '".$this->db->escape($response_info['xToken'])."', cardknox_ref = '".$this->db->escape($response_info['xRefNum'])."', cardknox_mode = '".($this->config->get('payment_cardknox_method') == 'capture'? '': 'auth')."' where order_id = ".(int)$this->session->data['order_id']);
 				$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('payment_cardknox_order_status_id'), $message, true);
 				// save card token
 				if($this->request->post['cc_from'] == 'new' && $this->request->post['cc_save']) {
@@ -207,7 +207,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		if($token) {
 			$message = 'Using saved card without authorizing.';
 			// now save transaction info
-			$this->db->query("update ".DB_PREFIX."order set token = '".$this->db->escape($token)."', payment_mode = 'card' where order_id = ".(int)$this->session->data['order_id']);
+			$this->db->query("update ".DB_PREFIX."order set cardknox_token = '".$this->db->escape($token)."', cardknox_mode = 'card' where order_id = ".(int)$this->session->data['order_id']);
 			$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('payment_cardknox_order_status_id'), $message, true);
 			$json['redirect'] = $this->url->link('checkout/success', '', true);
 		} else {

@@ -146,9 +146,9 @@ class ControllerExtensionPaymentCardknox extends Controller {
 	
 	public function install() {
 		$this->db->query("CREATE TABLE ".DB_PREFIX."cardknox_card (customer_card_id int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, customer_id int(11) NOT NULL, token varchar(128) NOT NULL, exp varchar(4), pan varchar(24), `card_type` varchar(24))");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN token varchar(128)");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN ref_num varchar(64)");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN payment_mode enum('capture','auth','card') default null");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN cardknox_token varchar(128)");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN cardknox_ref varchar(64)");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN cardknox_mode enum('capture','auth','card') default null");
 		// set up event handlers
 		$this->load->model('setting/event');
 		// cleanup after order place/logout
@@ -159,9 +159,9 @@ class ControllerExtensionPaymentCardknox extends Controller {
 	
 	public function uninstall() {
 		$this->db->query("DROP TABLE ".DB_PREFIX."cardknox_card");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN token");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN ref_num");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN payment_mode");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN cardknox_token");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN cardknox_ref");
+		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN cardknox_mode");
 		// Remove event handlers
 		$this->load->model('setting/event');
 		$this->model_setting_event->deleteEventByCode('cardknox');

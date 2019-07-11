@@ -107,19 +107,75 @@
         enableLogging();
         setAccount(token, "OpenCart3", "0.1.2");
         var style = {
+            'background-image': 'url(http://jquerycreditcardvalidator.com/images/images.png)',
+            'background-position': '100px -61px',
+            'background-size': '120px 361px',
+            'background-repeat': 'no-repeat',
             border: '1px solid #cccccc',
             'font-size': '12px',
             'padding-bottom': '6px',
             'padding-left': '12px',
             'padding-right': '12px',
             'padding-top': '6px',
-            width: '254.5px',
+            width: '100px',
             height: '20px',
             margin: '0px'
         };
-        setIfieldStyle('card-number', style);
         setIfieldStyle('cvv', style);
+        var style = {
+            'border': '1px solid #cccccc',
+            'font-size': '12px',
+            'padding-bottom': '6px',
+            'padding-left': '54px',
+            'padding-right': '12px',
+            'padding-top': '6px',
+            'width': '155px',
+            'height': '20px',
+            'margin': '0px',
+            'background-image': 'url(http://jquerycreditcardvalidator.com/images/images.png),url(http://jquerycreditcardvalidator.com/images/images.png)',
+            'background-position': '2px -121px, 190px -61px',
+            'background-size': '120px 361px, 120px 361px',
+            'background-repeat': 'no-repeat',
+            'filter': 'grayscale(100%)'
+        };
+        setIfieldStyle('card-number', style);
+        addIfieldKeyPressCallback(function(data) {       
+            if(data.cardNumberIsValid) {
+                var filter = 'grayscale(0%)';
+                var end='-87px';
+            } else {
+                var filter = 'grayscale(100%)';
+                var end='-61px';
+            }
+            switch(data.issuer) {
+                case 'visa':
+                    var style = {'background-position': '2px -163px, 190px '+end, 'filter': filter};
+                    break;
+                case 'visa_electron':
+                    var style = {'background-position': '2px -205px, 190px '+end, 'filter': filter};
+                    break;
+                case 'mastercard':
+                    var style = {'background-position': '2px -247px, 190px '+end, 'filter': filter};
+                    break;
+                case 'maestro':
+                    var style = {'background-position': '2px -289px, 190px '+end, 'filter': filter};
+                    break;
+                case 'discover':
+                    var style = {'background-position': '2px -331px, 190px '+end, 'filter': filter};
+                    break;
+                default:
+                    var style = {'background-position': '2px -121px, 190px '+end, 'filter': filter};
+                    break;
+            }
+            setIfieldStyle('card-number', style);
+            if(data.cvvIsValid) {
+                setIfieldStyle('cvv', {'background-position': '100px -87px'});
+            } else {
+                setIfieldStyle('cvv', {'background-position': '100px -61px'});
+            }
+        });
         enableAutoFormatting("-");
+        
     }
     script.src = 'https://cdn.cardknox.com/ifields/2.5.1905.0801/ifields.min.js';
     head.appendChild(script);
