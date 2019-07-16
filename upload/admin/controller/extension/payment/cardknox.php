@@ -145,23 +145,21 @@ class ControllerExtensionPaymentCardknox extends Controller {
 	
 	
 	public function install() {
-		$this->db->query("CREATE TABLE ".DB_PREFIX."cardknox_card (customer_card_id int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, customer_id int(11) NOT NULL, token varchar(128) NOT NULL, exp varchar(4), pan varchar(24), `card_type` varchar(24))");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN cardknox_token varchar(128)");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN cardknox_ref varchar(64)");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order ADD COLUMN cardknox_mode enum('capture','auth','card') default null");
+		$this->db->query("CREATE TABLE ".DB_PREFIX."cardknox_card (customer_card_id int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, customer_id int(11) NOT NULL, token varchar(128) NOT NULL, exp varchar(4), pan varchar(24), `card_type` varchar(24), status tinyint(1))");
+		$this->db->query("CREATE TABLE ".DB_PREFIX."cardknox_transaction (transaction_id int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, card_id int(11), order_id int(11) NOT NULL, refnum varchar(24), authcode varchar(24), avs varchar(3), cvv varchar(1), amount float(16,2), `card_type` varchar(24), pan varchar(24), token varchar(128) NOT NULL, tran_date datetime default CURRENT_TIMESTAMP)");
 		// set up event handlers
 		$this->load->model('setting/event');
 		// cleanup after order place/logout
 		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/checkout/success/after', 'event/cardknox/clean');
 		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/account/logout/after', 'event/cardknox/clean');
 		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/account/login/after', 'event/cardknox/clean');
+		// erase cards on password reset
+		$this->model_setting_event->addEvent('cardknox', 'catalog/model/account/customer/editCode/after', 'event/cardknox/secure');
 	}
 	
 	public function uninstall() {
 		$this->db->query("DROP TABLE ".DB_PREFIX."cardknox_card");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN cardknox_token");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN cardknox_ref");
-		$this->db->query("ALTER TABLE ".DB_PREFIX."order DROP COLUMN cardknox_mode");
+		$this->db->query("DROP TABLE ".DB_PREFIX."cardknox_transaction");
 		// Remove event handlers
 		$this->load->model('setting/event');
 		$this->model_setting_event->deleteEventByCode('cardknox');

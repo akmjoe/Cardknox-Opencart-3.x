@@ -154,22 +154,40 @@ class ControllerExtensionPaymentCardknox extends Controller {
 				if (isset($response_info['xStatus']) ) {
 					$message .= 'Status: ' . $response_info['xStatus'] . "\n";;
 				}
-				// now save transaction info
-				$this->db->query("update ".DB_PREFIX."order set cardknox_token = '".$this->db->escape($response_info['xToken'])."', cardknox_ref = '".$this->db->escape($response_info['xRefNum'])."', cardknox_mode = '".($this->config->get('payment_cardknox_method') == 'capture'? '': 'auth')."' where order_id = ".(int)$this->session->data['order_id']);
-				$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('payment_cardknox_order_status_id'), $message, true);
 				// save card token
-				if($this->request->post['cc_from'] == 'new' && $this->request->post['cc_save']) {
-					$this->load->model('extension/credit_card/cardknox');
+				$this->load->model('extension/credit_card/cardknox');
+				$this->load->model('extension/payment/cardknox');
+				$id = 0;
+				if($this->request->post['cc_from'] == 'new' && isset($this->request->post['cc_save']) && $this->request->post['cc_save']) {
 					$data = array(
 							'token' => $response_info['xToken'],
 							'exp' => $response_info['xExp'],
 							'pan' => $response_info['xMaskedCardNumber'],
-							'card_type' => $response_info['xCardType']
+							'card_type' => $response_info['xCardType'],
+							'status' => 1
 					);
-					$this->model_extension_credit_card_cardknox->addCard($this->customer->getID(), $data);
+					$id = $this->model_extension_credit_card_cardknox->addCard($this->customer->getID(), $data);
 				}
-				// save token to session for split_order
-				$this->session->data['card_token'] = $response_info['xToken'];
+				// now save transaction info
+				$this->model_extension_payment_cardknox->saveTransaction($this->session->data['order_id'],$response_info,$this->request->post['cc_from'] == 'existing'?$this->request->post['cc_id']:$id);
+				
+				$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('payment_cardknox_order_status_id'), $message, true);
+				
+				// save card to session for split_order
+				if(isset($this->session->data['split_order']) && $this->session->data['split_order']) {
+					if($id) {
+						$this->session->data['card_id'] = $id;
+					} else {
+						$data = array(
+							'token' => $response_info['xToken'],
+							'exp' => $response_info['xExp'],
+							'pan' => $response_info['xMaskedCardNumber'],
+							'card_type' => $response_info['xCardType'],
+							'status' => 2
+						);
+						$this->session->data['card_id'] = $this->model_extension_credit_card_cardknox->addCard($this->customer->getID(), $data);
+					}
+				}
 				
 				$json['redirect'] = $this->url->link('checkout/success', '', true);
 			} else {
@@ -191,23 +209,18 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput('');
 	}
-        
+    /**
+	 * Called by split_order for second order only
+	 */
 	public function card() {
 		$this->load->language('extension/payment/cardknox');
 		$this->load->model('extension/credit_card/cardknox');
 		
-		if($this->request->post['cc_from'] == 'existing') {// old saved card
-			$token = $this->model_extension_credit_card_cardknox->getToken($this->customer->getID(), $this->request->post['cc_id']);
-		} elseif(isset($this->session->data['card_token'])) {// card not saved, but authorized
-			$token = $this->session->data['card_token'];
-		} else {// card only
-			$token = $this->saveCard();
-		}
-		// now process the order
-		if($token) {
+		if($this->session->data['card_id']) {
 			$message = 'Using saved card without authorizing.';
 			// now save transaction info
-			$this->db->query("update ".DB_PREFIX."order set cardknox_token = '".$this->db->escape($token)."', cardknox_mode = 'card' where order_id = ".(int)$this->session->data['order_id']);
+				$this->load->model('extension/payment/cardknox');
+			$this->model_extension_payment_cardknox->saveTransaction($this->session->data['order_id'],array(),$this->session->data['card_id']);
 			$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('payment_cardknox_order_status_id'), $message, true);
 			$json['redirect'] = $this->url->link('checkout/success', '', true);
 		} else {

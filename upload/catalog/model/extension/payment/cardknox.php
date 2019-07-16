@@ -30,4 +30,13 @@ class ModelExtensionPaymentCardknox extends Model {
 
 		return $method_data;
 	}
+	
+	public function saveTransaction($order_id, $data, $card_id = 0) {
+		if(count($data)) {
+			$this->db->query("INSERT INTO ".DB_PREFIX."cardknox_transaction set card_id = '".(int)$card_id."', refnum = '".$this->db->escape($data['xRefNum'])."', authcode = '".$this->db->escape($data['xAuthCode'])."', avs = '".$this->db->escape($data['xAvsResultCode'])."', cvv = '".$this->db->escape($data['xCvvResultCode'])."', amount = '".$this->db->escape($data['xAuthAmount'])."', token = '".$this->db->escape($data['xToken'])."', pan = '".$this->db->escape($data['xMaskedCardNumber'])."', card_type = '".$this->db->escape($data['xCardType'])."', order_id = '".(int)$order_id."'");
+		} else {
+			$this->db->query("INSERT INTO ".DB_PREFIX."cardknox_transaction set card_id = '".(int)$card_id."', order_id = '".(int)$order_id."'");
+		}
+        return $this->db->getLastId();
+	}
 }
