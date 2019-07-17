@@ -134,7 +134,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 			parse_str($apiResponse, $response_info);
 			$this->logger($response_info);
 			if (( $response_info['xResult'] == 'A') ){
-				$message = '';
+				$message = ($this->config->get('payment_cardknox_method') == 'capture') ? "Credit card payment received\n" : "Credit card has been pre-authorized but not charged\n";
 				$comment = '';
 				if (isset($response_info['xAuthCode'])) {
 					$message .= 'Authorization Code: ' . $response_info['xAuthCode'] . "\n";
@@ -217,7 +217,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		$this->load->model('extension/credit_card/cardknox');
 		
 		if($this->session->data['card_id']) {
-			$message = 'Using saved card without authorizing.';
+			$message = 'Card will be charged when the product ships.';
 			// now save transaction info
 				$this->load->model('extension/payment/cardknox');
 			$this->model_extension_payment_cardknox->saveTransaction($this->session->data['order_id'],array(),$this->session->data['card_id']);
