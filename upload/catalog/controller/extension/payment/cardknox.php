@@ -57,6 +57,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
 
 		$data = array();
+		$json = array();
 
 		$data['xKey'] = $this->config->get('payment_cardknox_transaction_key');
 		$data['xVersion'] = '4.5.8';
@@ -80,9 +81,26 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		$data['xCommand'] = ($this->config->get('payment_cardknox_method') == 'capture') ? 'cc:sale' : 'cc:authonly';
 		if($this->request->post['cc_from'] == 'existing' && $this->request->post['cc_id']) {
 			$this->load->model('extension/credit_card/cardknox');
-			$data['xToken'] = $this->model_extension_credit_card_cardknox->getToken($this->customer->getID(), $this->request->post['cc_id']);
-		} else {
-			$data['xCardNum'] = $this->request->post['xCardNum'];
+			$id = (int)$this->request->post['cc_id'];
+			$data['xToken'] = $this->model_extension_credit_card_cardknox->getToken($this->customer->getID(), $id);
+		} else {// new card
+			$id = $this->saveCard();
+			if(!$id) {
+				// card failed to save
+				$json['error'] = $this->language->get('error_card');
+			} else {
+				$result = $this->db->query('select * from '.DB_PREFIX.'cardknox_card where customer_card_id = '.(int)$id);
+				if($result->row['status'] == 1 || $result->row['status'] == 2) {
+					// valid card
+					$data['xToken'] = $result->row['token'];
+					// save ID for split checkout
+					$this->session->data['card_id'] = $id;
+				} else {
+					// failed AVS or card is disabled
+					$json['error'] = $this->language->get('error_address');
+				}
+			}
+			//$data['xCardNum'] = $this->request->post['xCardNum'];
 			$data['xExp'] = $this->request->post['cc_expire_date_month'] . substr($this->request->post['cc_expire_date_year'],2,2);
 			$data['xCVV'] = $this->request->post['xCVV'];
 		}
@@ -116,89 +134,92 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		if($this->config->get('payment_cardknox_debug')) {
 			$this->log->write($this->request->post);
 		}
-		
-		$curl = curl_init($url);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($curl, CURLOPT_POST, 1);
-		curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data, '', '&'));
+		if(!isset($json['error']) && isset($data['xToken']) && $data['xToken']) {
+			// process card
+			$curl = curl_init($url);
+			curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($curl, CURLOPT_POST, 1);
+			curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data, '', '&'));
 
-		$apiResponse = curl_exec($curl);
-		$json = array();
+			$apiResponse = curl_exec($curl);
 
-		if (curl_error($curl)) {
-			$json['error'] = 'CURL ERROR: ' . curl_errno($curl) . '::' . curl_error($curl);
+			if (curl_error($curl)) {
+				$json['error'] = 'CURL ERROR: ' . curl_errno($curl) . '::' . curl_error($curl);
 
-			$this->logger('CARDKNOX CURL ERROR: ' . curl_errno($curl) . '::' . curl_error($curl));
-		} elseif ($apiResponse) {
-			$response_info = array();
-			parse_str($apiResponse, $response_info);
-			$this->logger($response_info);
-			if (( $response_info['xResult'] == 'A') ){
-				$message = ($this->config->get('payment_cardknox_method') == 'capture') ? "Credit card payment received\n" : "Credit card has been pre-authorized but not charged\n";
-				$comment = '';
-				if (isset($response_info['xAuthCode'])) {
-					$message .= 'Authorization Code: ' . $response_info['xAuthCode'] . "\n";
-				}
-
-				if (isset($response_info['xAvsResult'])) {
-					$message .= 'AVS Response: ' . $response_info['xAvsResult'] . "\n";
-				}
-
-				if (isset($response_info['xRefNum'])) {
-					$message .= 'Reference Number: ' . $response_info['xRefNum'] . "\n";
-				}
-
-				if (isset($response_info['xCVVResult'])) {
-					$message .= 'Card Code Response: ' . $response_info['xCVVResponse'] . "\n";
-				}
-				if (isset($response_info['xStatus']) ) {
-					$message .= 'Status: ' . $response_info['xStatus'] . "\n";;
-				}
-				// save card token
-				$this->load->model('extension/credit_card/cardknox');
-				$this->load->model('extension/payment/cardknox');
-				$id = 0;
-				if($this->request->post['cc_from'] == 'new' && isset($this->request->post['cc_save']) && $this->request->post['cc_save']) {
-					$data = array(
-							'token' => $response_info['xToken'],
-							'exp' => $response_info['xExp'],
-							'pan' => $response_info['xMaskedCardNumber'],
-							'card_type' => $response_info['xCardType'],
-							'status' => 1
-					);
-					$id = $this->model_extension_credit_card_cardknox->addCard($this->customer->getID(), $data);
-				}
-				// now save transaction info
-				$this->model_extension_payment_cardknox->saveTransaction($this->session->data['order_id'],$response_info,$this->request->post['cc_from'] == 'existing'?$this->request->post['cc_id']:$id);
-				
-				$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('payment_cardknox_order_status_id'), $message, true);
-				
-				// save card to session for split_order
-				if(isset($this->session->data['split_order']) && $this->session->data['split_order']) {
-					if($id) {
-						$this->session->data['card_id'] = $id;
-					} else {
-						$data = array(
-							'token' => $response_info['xToken'],
-							'exp' => $response_info['xExp'],
-							'pan' => $response_info['xMaskedCardNumber'],
-							'card_type' => $response_info['xCardType'],
-							'status' => 2
-						);
-						$this->session->data['card_id'] = $this->model_extension_credit_card_cardknox->addCard($this->customer->getID(), $data);
+				$this->logger('CARDKNOX CURL ERROR: ' . curl_errno($curl) . '::' . curl_error($curl));
+			} elseif ($apiResponse) {
+				$response_info = array();
+				parse_str($apiResponse, $response_info);
+				$this->logger($response_info);
+				if (( $response_info['xResult'] == 'A') ){
+					$message = ($this->config->get('payment_cardknox_method') == 'capture') ? "Credit card payment received\n" : "Credit card has been pre-authorized but not charged\n";
+					$comment = '';
+					if (isset($response_info['xAuthCode'])) {
+						$message .= 'Authorization Code: ' . $response_info['xAuthCode'] . "\n";
 					}
-				}
-				
-				$json['redirect'] = $this->url->link('checkout/success', '', true);
-			} else {
-				$json['error'] = $response_info['xError'];
-			}
-		} else {
-			$json['error'] = 'Empty Gateway Response';
 
-			$this->logger('Cardknox CURL ERROR: Empty Gateway Response');
+					if (isset($response_info['xAvsResult'])) {
+						$message .= 'AVS Response: ' . $response_info['xAvsResult'] . "\n";
+					}
+
+					if (isset($response_info['xRefNum'])) {
+						$message .= 'Reference Number: ' . $response_info['xRefNum'] . "\n";
+					}
+
+					if (isset($response_info['xCVVResult'])) {
+						$message .= 'Card Code Response: ' . $response_info['xCVVResponse'] . "\n";
+					}
+					if (isset($response_info['xStatus']) ) {
+						$message .= 'Status: ' . $response_info['xStatus'] . "\n";;
+					}
+					// save card token
+					/*
+					$this->load->model('extension/credit_card/cardknox');
+					$this->load->model('extension/payment/cardknox');
+					$id = 0;
+					if($this->request->post['cc_from'] == 'new' && isset($this->request->post['cc_save']) && $this->request->post['cc_save']) {
+						$data = array(
+								'token' => $response_info['xToken'],
+								'exp' => $response_info['xExp'],
+								'pan' => $response_info['xMaskedCardNumber'],
+								'card_type' => $response_info['xCardType'],
+								'status' => 1
+						);
+						$id = $this->model_extension_credit_card_cardknox->addCard($this->customer->getID(), $data);
+					}
+					 */
+					// now save transaction info
+					$this->model_extension_payment_cardknox->saveTransaction($this->session->data['order_id'],$response_info,$id);
+
+					$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('payment_cardknox_order_status_id'), $message, true);
+
+					// save card to session for split_order
+					/*if(isset($this->session->data['split_order']) && $this->session->data['split_order']) {
+						if($id) {
+							$this->session->data['card_id'] = $id;
+						} else {
+							$data = array(
+								'token' => $response_info['xToken'],
+								'exp' => $response_info['xExp'],
+								'pan' => $response_info['xMaskedCardNumber'],
+								'card_type' => $response_info['xCardType'],
+								'status' => 2
+							);
+							$this->session->data['card_id'] = $this->model_extension_credit_card_cardknox->addCard($this->customer->getID(), $data);
+						}
+					}*/
+
+					$json['redirect'] = $this->url->link('checkout/success', '', true);
+				} else {
+					$json['error'] = $response_info['xError'];
+				}
+			} else {
+				$json['error'] = 'Empty Gateway Response';
+
+				$this->logger('Cardknox CURL ERROR: Empty Gateway Response');
+			}
+			curl_close($curl);
 		}
-		curl_close($curl);
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
 	}
@@ -275,8 +296,25 @@ class ControllerExtensionPaymentCardknox extends Controller {
 			parse_str($apiResponse, $response_info);
 			$this->logger($response_info);
 			if (( $response_info['xResult'] == 'A') ){
+				$status = 2;// assume hidden
+				if(isset($this->request->post['cc_save']) && $this->request->post['cc_save']) {
+					$status = 1;// customer requested card save
+				}
+				// check avs
+				if(isset($response_info['xAvsResultCode']) && strpos($response_info['xAvsResultCode'],1,1) == 'N') {
+					$status = 3;// failed avs validation
+				}
 				// now save card info
-				$return = $response_info['xToken'];
+				$this->load->model('extension/credit_card/cardknox');
+				$this->load->model('extension/payment/cardknox');
+				$data = array(
+						'token' => $response_info['xToken'],
+						'exp' => $response_info['xExp'],
+						'pan' => $response_info['xMaskedCardNumber'],
+						'card_type' => $response_info['xCardType'],
+						'status' => $status
+				);
+				$return = $this->model_extension_credit_card_cardknox->addCard($this->customer->getID(), $data);
 			}
 		} else {
 			$this->logger('Cardknox CURL ERROR: Empty Gateway Response');

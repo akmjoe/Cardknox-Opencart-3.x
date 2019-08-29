@@ -18,3 +18,5 @@ $_['entry_cc_new']         = 'New card';
 
 // Errors
 $_['error_save']		   = 'Card Save Error!';
+$_['error_card']		   = 'There was an error processing your card, please try again.';
+$_['error_address']		   = 'Billing address does not match credit card!';
