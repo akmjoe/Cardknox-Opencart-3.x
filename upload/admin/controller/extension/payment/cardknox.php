@@ -150,11 +150,11 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		// set up event handlers
 		$this->load->model('setting/event');
 		// cleanup after order place/logout
-		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/checkout/success/after', 'event/cardknox/clean');
-		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/account/logout/after', 'event/cardknox/clean');
-		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/account/login/after', 'event/cardknox/clean');
+		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/checkout/success/after', 'extension/event/cardknox/clean');
+		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/account/logout/after', 'extension/event/cardknox/clean');
+		$this->model_setting_event->addEvent('cardknox', 'catalog/controller/account/login/after', 'extension/event/cardknox/clean');
 		// erase cards on password reset
-		$this->model_setting_event->addEvent('cardknox', 'catalog/model/account/customer/editCode/after', 'event/cardknox/secure');
+		$this->model_setting_event->addEvent('cardknox', 'catalog/model/account/customer/editCode/after', 'extension/event/cardknox/secure');
 	}
 	
 	public function uninstall() {
