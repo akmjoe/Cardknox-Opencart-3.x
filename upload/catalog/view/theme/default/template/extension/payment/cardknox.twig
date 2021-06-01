@@ -23,7 +23,19 @@
             <div class="form-group required">
                 <label class="col-sm-2 control-label" for="input-cc-owner">{{ entry_cc_owner }}</label>
                 <div class="col-sm-10">
-                    <input type="text" name="cc_owner" value="" placeholder="{{ entry_cc_owner }}" id="input-cc-owner" class="form-control"/>
+                    <input type="text" name="cc_owner" value="{{ cc_name }}" placeholder="{{ entry_cc_owner }}" id="input-cc-owner" class="form-control"/>
+                </div>
+            </div>
+            <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-cc-address">{{ entry_cc_address }}</label>
+                <div class="col-sm-10">
+                    <input type="text" name="cc_address" value="{{ cc_address }}" placeholder="{{ entry_cc_address }}" id="input-cc-address" class="form-control"/>
+                </div>
+            </div>
+            <div class="form-group required">
+                <label class="col-sm-2 control-label" for="input-cc-zip">{{ entry_cc_zip }}</label>
+                <div class="col-sm-10">
+                    <input type="text" name="cc_zip" value="{{ cc_zip }}" placeholder="{{ entry_cc_zip }}" id="input-cc-zip" class="form-control"/>
                 </div>
             </div>
             <div class="form-group required">
@@ -102,8 +114,8 @@
     var token = "{{ cardknox_token_key }}";
     var head = document.getElementsByTagName('head')[0];
     var script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.onload = function () {
+    //script.type = 'text/javascript';
+    //script.onload = function () {
         enableLogging();
         setAccount(token, "OpenCart3", "0.1.2");
         var style = {
@@ -176,12 +188,17 @@
         });
         enableAutoFormatting("-");
         
-    }
-    script.src = 'https://cdn.cardknox.com/ifields/2.5.1905.0801/ifields.min.js';
-    head.appendChild(script);
-    $('#button-confirm').on('click', function (event) {
-        event.preventDefault();
+    //}
+    //script.src = 'https://cdn.cardknox.com/ifields/2.5.1905.0801/ifields.min.js';
+    //head.appendChild(script);
+    
+    $('#button-confirm').on('click', function () {
+        console.log('button click');
+        console.log($('input[name=\'cc_from\']:checked').val());
+        //event.preventDefault();
+        console.log('checking card source');
         if($('input[name=\'cc_from\']:checked').val() == 'existing') {// saved card
+            console.log('saved card');
             $.ajax({
                 url: 'index.php?route=extension/payment/cardknox/send',
                 type: 'post',
@@ -204,23 +221,24 @@
                 }
             });
         } else {// new card - get token & save
+            console.log('new card');
             getTokens(function () {
                 // onSuccess
                 var D = new Date();
                 if (parseInt($("select[name=cc_expire_date_month]").val()) < D.getMonth()+1 && parseInt($("select[name=cc_expire_date_year]").val()) == D.getFullYear()) {
                     alert("Card is expired!");
-                    event.preventDefault = false;
+                    //event.preventDefault = false;
                     return;
                 }
                 // perform your own validation here...
                 if ($("input[name=xCardNum]").val() === '') {
                     alert("Card number required!");
-                    event.preventDefault = false;
+                    //event.preventDefault = false;
                     return;
                 }
                 if ($("input[name=xCVV]").val() === '') {
                     alert("CVV rquired!");
-                    event.preventDefault = false;
+                    //event.preventDefault = false;
                     return;
                 }
                 $.ajax({
@@ -259,7 +277,7 @@
                     });
 
                     alert(document.getElementById('ifieldsError').textContent);
-                    event.preventDefault = false;
+                    //event.preventDefault = false;
                     return;
             },// end error callback
             // 30 second timeout

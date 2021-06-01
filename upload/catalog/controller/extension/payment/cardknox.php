@@ -45,12 +45,20 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		$data['text_manage'] = $this->language->get('text_manage');
 		
 		$data['cardknox_token_key'] = $this->config->get('payment_cardknox_token_key');
+		/***************** Add billing address data *****************************/
+		$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
+		
+		$data['cc_name'] = $order_info['payment_firstname'].' '.$order_info['payment_lastname'];
+		$data['cc_address'] = $order_info['payment_address_1'];
+		$data['cc_zip'] = $order_info['payment_postcode'];
 		// $this->document->addScript('https://cdn.cardknox.com/ifields/ifields.min.js');
 		return $this->load->view('extension/payment/cardknox', $data);
 	}
 
 	public function send() {
 		$url = 'https://x1.cardknox.com/gateway';
+		/*********************** First save address ****************************/
+		
 
 		$this->load->model('checkout/order');
 
@@ -266,8 +274,8 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		$data['xSoftwareVersion'] = '1.0.2';
 
 		$data['xName'] = html_entity_decode($this->request->post['cc_owner'], ENT_QUOTES, 'UTF-8');
-		$data['xStreet'] = html_entity_decode($order_info['payment_address_1'], ENT_QUOTES, 'UTF-8');
-		$data['xZip'] = html_entity_decode($order_info['payment_postcode'], ENT_QUOTES, 'UTF-8');
+		$data['xStreet'] = html_entity_decode($this->request->post['cc_address'], ENT_QUOTES, 'UTF-8');
+		$data['xZip'] = html_entity_decode($this->request->post['cc_zip'], ENT_QUOTES, 'UTF-8');
 		$data['xIP'] = $this->request->server['REMOTE_ADDR'];
 		$data['xCommand'] = 'cc:save';
 		$data['xCardNum'] = $this->request->post['xCardNum'];

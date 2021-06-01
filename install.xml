@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<name>Cardknox Payment Module</name>
+	<version>1.0</version>
+	<author>Joe Rothrock</author>
+	<link>https://github.com/akmjoe</link>
+	<code>cardknox</code>
+    <file path="catalog/controller/checkout/checkout.php">
+        <operation error="skip" info="To add address save method">
+            <search><![CDATA[$this->document->setTitle($this->language->get('heading_title'));]]></search>
+            <add position="after"><![CDATA[// Required by cardknox
+		if ($this->config->get('payment_cardknox_status')) {
+			$this->document->addScript('https://cdn.cardknox.com/ifields/2.5.1905.0801/ifields.min.js');
+		}]]></add>
+        </operation>
+    </file>
+</modification>
