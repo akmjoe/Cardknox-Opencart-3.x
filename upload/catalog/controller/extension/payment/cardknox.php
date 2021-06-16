@@ -75,10 +75,6 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		$data['xBillFirstname'] = html_entity_decode($order_info['payment_firstname'], ENT_QUOTES, 'UTF-8');
 		$data['xBillLastname'] = html_entity_decode($order_info['payment_lastname'], ENT_QUOTES, 'UTF-8');
 		$data['xBillCompany'] = html_entity_decode($order_info['payment_company'], ENT_QUOTES, 'UTF-8');
-		$data['xBillStreet'] = html_entity_decode($order_info['payment_address_1'], ENT_QUOTES, 'UTF-8');
-		$data['xBillCity'] = html_entity_decode($order_info['payment_city'], ENT_QUOTES, 'UTF-8');
-		$data['xBillState'] = html_entity_decode($order_info['payment_zone'], ENT_QUOTES, 'UTF-8');
-		$data['xBillZip'] = html_entity_decode($order_info['payment_postcode'], ENT_QUOTES, 'UTF-8');
 		$data['xBillCountry'] = html_entity_decode($order_info['payment_country'], ENT_QUOTES, 'UTF-8');
 		$data['xBillPhone'] = $order_info['telephone'];
 		$data['xIP'] = $this->request->server['REMOTE_ADDR'];
@@ -92,6 +88,10 @@ class ControllerExtensionPaymentCardknox extends Controller {
 			$id = (int)$this->request->post['cc_id'];
 			$data['xToken'] = $this->model_extension_credit_card_cardknox->getToken($this->customer->getID(), $id);
 		} else {// new card
+			$data['xBillStreet'] = html_entity_decode($order_info['payment_address_1'], ENT_QUOTES, 'UTF-8');
+			$data['xBillCity'] = html_entity_decode($order_info['payment_city'], ENT_QUOTES, 'UTF-8');
+			$data['xBillState'] = html_entity_decode($order_info['payment_zone'], ENT_QUOTES, 'UTF-8');
+			$data['xBillZip'] = html_entity_decode($order_info['payment_postcode'], ENT_QUOTES, 'UTF-8');
 			$id = $this->saveCard();
 			if(!$id) {
 				// card failed to save
@@ -197,6 +197,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 					}
 					 */
 					// now save transaction info
+					$this->load->model('extension/payment/cardknox');
 					$this->model_extension_payment_cardknox->saveTransaction($this->session->data['order_id'],$response_info,$id);
 
 					$this->model_checkout_order->addOrderHistory($this->session->data['order_id'], $this->config->get('payment_cardknox_order_status_id'), $message, true);
@@ -227,6 +228,9 @@ class ControllerExtensionPaymentCardknox extends Controller {
 				$this->logger('Cardknox CURL ERROR: Empty Gateway Response');
 			}
 			curl_close($curl);
+		} 
+		if(!count($json)) {
+			$json['error'] = $this->language->get('error_card');
 		}
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));

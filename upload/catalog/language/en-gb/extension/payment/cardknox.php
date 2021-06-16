@@ -20,5 +20,6 @@ $_['entry_cc_zip']         = 'Card Billing Zip';
 
 // Errors
 $_['error_save']		   = 'Card Save Error!';
+$_['error_unknown']		   = 'An unknown Error has occured, please try again.';
 $_['error_card']		   = 'There was an error processing your card, please try again.';
 $_['error_address']		   = 'Billing address does not match credit card!';
