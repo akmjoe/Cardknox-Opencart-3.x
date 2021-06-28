@@ -14,4 +14,13 @@
 		}]]></add>
         </operation>
     </file>
+    <file path="admin/controller/setting/setting.php">
+        <operation error="skip" info="To add card to captcha">
+            <search><![CDATA[$data['captcha_pages'] = array();]]></search>
+            <add position="after"><![CDATA[$data['captcha_pages'][] = array(
+			'text'  => 'Cardknox',
+			'value' => 'card'
+		);]]></add>
+        </operation>
+    </file>
 </modification>
