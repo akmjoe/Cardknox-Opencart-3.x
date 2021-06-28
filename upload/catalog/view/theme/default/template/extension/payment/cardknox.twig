@@ -203,7 +203,7 @@
             $.ajax({
                 url: 'index.php?route=extension/payment/cardknox/send',
                 type: 'post',
-                data: $('#payment input[type=\'text\'], #payment input[type=\'hidden\'], #payment input[type=\'checkbox\']:checked, #payment input[type=\'radio\']:checked, #payment select'),
+                data: $('#payment input[type=\'text\'], #payment input[type=\'hidden\'], #payment input[type=\'checkbox\']:checked, #payment input[type=\'radio\']:checked, #payment select, #payment textarea'),
                 dataType: 'json',
                 cache: false,
                 beforeSend: function () {
