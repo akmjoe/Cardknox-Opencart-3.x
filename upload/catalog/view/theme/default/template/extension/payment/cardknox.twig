@@ -215,7 +215,17 @@
                 },
                 success: function (json) {
                     if (json['error']) {
-                        alert(json['error']);
+                       if(json['error']['captcha']) {
+                            var element = $('#input-payment-captcha');
+
+                            if ($(element).parent().hasClass('input-group')) {
+                                    $(element).parent().after('<div class="text-danger">' + json['error']['captcha'] + '</div>');
+                            } else {
+                                    $(element).after('<div class="text-danger">' + json['error']['captcha'] + '</div>');
+                            }
+                        } else {
+                            alert(json['error']);
+                        }
                     } else if (json['redirect']) {
                         location = json['redirect'];
                     }
