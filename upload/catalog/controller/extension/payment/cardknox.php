@@ -239,7 +239,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 
 					$json['redirect'] = $this->url->link('checkout/success', '', true);
 				} else {
-					$json['error'] = $response_info['xError'];
+					$json['error'] = $this->language->get('error_prefix') . $response_info['xError'];
 				}
 			} else {
 				$json['error'] = 'Empty Gateway Response';
