@@ -332,7 +332,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 					$status = 1;// customer requested card save
 				}
 				// check avs
-				if(isset($response_info['xAvsResultCode']) && strpos($response_info['xAvsResultCode'],1,1) == 'N') {
+				if(isset($response_info['xAvsResultCode']) && substr($response_info['xAvsResultCode'],1,1) == 'N') {
 					$status = 3;// failed avs validation
 				}
 				// now save card info
