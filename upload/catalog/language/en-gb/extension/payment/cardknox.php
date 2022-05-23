@@ -23,4 +23,4 @@ $_['error_save']		   = 'Card Save Error!';
 $_['error_prefix']		   = 'Credit card error: ';
 $_['error_unknown']		   = 'Credit card error: An unknown Error has occured, please try again.';
 $_['error_card']		   = 'There was an error processing your card, please try again.';
-$_['error_address']		   = 'Billing address does not match credit card!';
+$_['error_address']		   = 'Billing address does not match credit card! Please correct card billing address or use PayPal.';
