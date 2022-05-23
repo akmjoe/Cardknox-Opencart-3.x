@@ -64,6 +64,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 	}
 
 	public function send() {
+		$this->load->language('extension/payment/cardknox');
 		$url = 'https://x1.cardknox.com/gateway';
 		/*********************** Check Captcha ****************************/
 		// Captcha
@@ -76,7 +77,6 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		}
 		/*********************** Now save address ****************************/
 		if(!isset($json['error'])) {
-
 			$this->load->model('checkout/order');
 
 			$order_info = $this->model_checkout_order->getOrder($this->session->data['order_id']);
@@ -334,6 +334,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 				// check avs
 				if(isset($response_info['xAvsResultCode']) && substr($response_info['xAvsResultCode'],1,1) == 'N') {
 					$status = 3;// failed avs validation
+					$this->logger($response_info);
 				}
 				// now save card info
 				$this->load->model('extension/credit_card/cardknox');
