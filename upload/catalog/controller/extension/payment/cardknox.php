@@ -152,9 +152,6 @@ class ControllerExtensionPaymentCardknox extends Controller {
 				$data['xShipCountry'] = html_entity_decode($order_info['payment_country'], ENT_QUOTES, 'UTF-8');
 			}
 
-			$replacements = array('xKey' => "******", 'xCardNum' => "******", 'xCVV' => "******");	
-
-			$this->logger(array_replace($data, $replacements));
 
 			if($this->config->get('payment_cardknox_debug')) {
 				$this->log->write($this->request->post);
@@ -162,6 +159,9 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		}
 		/******************* Process card **********************/
 		if(!isset($json['error']) && isset($data['xToken']) && $data['xToken']) {
+			// log request data
+			$replacements = array('xKey' => "******", 'xCardNum' => "******", 'xCVV' => "******");
+			$this->logger(array_replace($data, $replacements));
 			// process card
 			$curl = curl_init($url);
 			curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
