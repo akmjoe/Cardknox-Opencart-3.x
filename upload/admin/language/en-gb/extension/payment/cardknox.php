@@ -25,6 +25,8 @@ $_['entry_sort_order']      = 'Sort Order';
 $_['entry_card_save']		= 'Save Card';
 $_['entry_debug']           = 'Debug Mode';
 $_['entry_fraud']           = 'Fraud Detection Total';
+$_['entry_brute_time']      = 'Lockout time (hours)';
+$_['entry_brute_count']     = 'Lockout attempts';
 
 // Help
 $_['help_total']            = 'The checkout total the order must reach before this payment method becomes active.';

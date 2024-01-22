@@ -29,4 +29,14 @@ class ModelExtensionCreditCardCardknox extends Model {
         $this->db->query("DELETE FROM `" . DB_PREFIX . "cardknox_card` WHERE customer_card_id='" . (int)$id . "'");
     }
 	
+	public function addAttempt($ip) {
+		$this->db->query("INSERT INTO `" . DB_PREFIX . "cardknox_log` SET ip='" . $this->db->escape($ip) . "'");
+		return $this->db->getLastId();
+	}
+	
+	public function getAttempts($ip, $date) {
+		$result = $this->db->query("SELECT count(*) as attempts FROM `" . DB_PREFIX . "cardknox_log` WHERE ip='" . $this->db->escape($ip) . "' and tran_date > '".$this->db->escape($date)."'");
+		return (int)$result->row['attempts'];
+	}
+	
 }
