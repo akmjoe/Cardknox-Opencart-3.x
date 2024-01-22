@@ -1,7 +1,7 @@
 <?php
 class ControllerExtensionPaymentCardknox extends Controller {
 	public function index() {
-
+		unset($this->session->data['gcapcha']);// force fresh captcha
 		$this->load->language('extension/payment/cardknox');
 		$data['months'] = array();
 
@@ -59,6 +59,9 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		} else {
 			$data['captcha'] = '';
 		}
+		/**************** Add random string to prevent multi submit ****************/
+		$this->session->data['random'] = base64_encode(random_bytes(10));
+		$data['random'] = $this->session->data['random'];
 		
 		return $this->load->view('extension/payment/cardknox', $data);
 	}
@@ -66,6 +69,13 @@ class ControllerExtensionPaymentCardknox extends Controller {
 	public function send() {
 		$this->load->language('extension/payment/cardknox');
 		$url = 'https://x1.cardknox.com/gateway';
+		if (!empty($this->request->server['HTTP_X_FORWARDED_FOR'])) {
+			$ip = $this->request->server['HTTP_X_FORWARDED_FOR'];
+		} elseif (!empty($this->request->server['HTTP_CLIENT_IP'])) {
+			$ip = $this->request->server['HTTP_CLIENT_IP'];
+		} else {
+			$ip = $this->request->server['REMOTE_ADDR'];
+		}
 		/*********************** Check Captcha ****************************/
 		// Captcha
 		if ($this->config->get('captcha_' . $this->config->get('config_captcha') . '_status') && in_array('card', (array)$this->config->get('config_captcha_page'))) {
@@ -73,6 +83,17 @@ class ControllerExtensionPaymentCardknox extends Controller {
 
 			if ($captcha) {
 				$json['error']['captcha'] = $captcha;
+			}
+			// force reset captcha validation
+			unset($this->session->data['gcapcha']);
+		}
+		/*********************** Brute Force Check ***************************/
+		$this->load->model('extension/credit_card/cardknox');
+		if(!isset($json['error'])) {
+			$date = date("Y-m-d H:i:s", strtotime('-'.$this->config->get('payment_cardknox_brute_time').' Hours'));
+			$attempts = $this->model_extension_credit_card_cardknox->getAttempts($ip, $date);
+			if((int)$this->config->get('payment_cardknox_brute_count') && $attempts >= (int)$this->config->get('payment_cardknox_brute_count')) {
+				$json['error'] = $this->language->get('error_lockout');// notify customers lockout
 			}
 		}
 		/*********************** Now save address ****************************/
@@ -113,6 +134,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 				if(!$id) {
 					// card failed to save
 					$json['error'] = $this->language->get('error_card');
+					$this->model_extension_credit_card_cardknox->addAttempt($ip);
 				} else {
 					$result = $this->db->query('select * from '.DB_PREFIX.'cardknox_card where customer_card_id = '.(int)$id);
 					if($result->row['status'] == 1 || $result->row['status'] == 2) {
@@ -123,6 +145,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 					} else {
 						// failed AVS or card is disabled
 						$json['error'] = $this->language->get('error_address');
+						$this->model_extension_credit_card_cardknox->addAttempt($ip);
 					}
 				}
 				//$data['xCardNum'] = $this->request->post['xCardNum'];

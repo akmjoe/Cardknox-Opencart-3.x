@@ -224,6 +224,7 @@
                                     $(element).after('<div class="text-danger">' + json['error']['captcha'] + '</div>');
                             }
                         } else {
+                            grecaptcha.reset();
                             alert(json['error']);
                         }
                     } else if (json['redirect']) {
@@ -277,6 +278,7 @@
                                 }
                             } else {
                                 alert(json['error']);
+                                grecaptcha.reset();
                             }
                         } else if (json['redirect']) {
                             location = json['redirect'];

@@ -1,6 +1,7 @@
 <?php
 class ControllerExtensionPaymentCardknox extends Controller {
 	private $error = array();
+	private $version = 1.0;
 
 	public function index() {
 		$this->load->language('extension/payment/cardknox');
@@ -10,6 +11,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		$this->load->model('setting/setting');
 
 		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
+			$this->upgrade();
 			$this->model_setting_setting->editSetting('payment_cardknox', $this->request->post);
 
 			$this->session->data['success'] = $this->language->get('text_success');
@@ -124,6 +126,18 @@ class ControllerExtensionPaymentCardknox extends Controller {
 			$data['payment_cardknox_fraud'] = $this->config->get('payment_cardknox_fraud');
 		}
 		
+		if (isset($this->request->post['payment_cardknox_brute_time'])) {
+			$data['payment_cardknox_brute_time'] = $this->request->post['payment_cardknox_brute_time'];
+		} else {
+			$data['payment_cardknox_brute_time'] = $this->config->get('payment_cardknox_brute_time');
+		}
+		
+		if (isset($this->request->post['payment_cardknox_brute_count'])) {
+			$data['payment_cardknox_brute_count'] = $this->request->post['payment_cardknox_brute_count'];
+		} else {
+			$data['payment_cardknox_brute_count'] = $this->config->get('payment_cardknox_brute_count');
+		}
+		
 		if (isset($this->request->post['payment_cardknox_status'])) {
 			$data['payment_cardknox_status'] = $this->request->post['payment_cardknox_status'];
 		} else {
@@ -160,9 +174,25 @@ class ControllerExtensionPaymentCardknox extends Controller {
 	public function uninstall() {
 		$this->db->query("DROP TABLE ".DB_PREFIX."cardknox_card");
 		$this->db->query("DROP TABLE ".DB_PREFIX."cardknox_transaction");
+		if((float)$this->config->get('payment_cardknox_version') > 0) {
+			$this->db->query("DROP TABLE ".DB_PREFIX."cardknox_log");
+		}
 		// Remove event handlers
 		$this->load->model('setting/event');
 		$this->model_setting_event->deleteEventByCode('cardknox');
+	}
+	
+	public function upgrade() {
+		// upgrade if required
+		$current = (float)$this->config->get('payment_cardknox_version');
+		if($current < $this->version) {
+			if($current < 1) {
+				// add brute force logging table
+				$this->db->query("CREATE TABLE ".DB_PREFIX."cardknox_log (id int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY, ip varchar(40), tran_date datetime default CURRENT_TIMESTAMP)");
+			}
+		}
+		// update version number
+		$this->request->post['payment_cardknox_version'] = $this->version;
 	}
 
 	protected function validate() {
