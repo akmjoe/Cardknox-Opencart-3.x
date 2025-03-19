@@ -223,12 +223,18 @@
                             } else {
                                     $(element).after('<div class="text-danger">' + json['error']['captcha'] + '</div>');
                             }
+                        } else if(json['error']['duplicate']) {
+                            alert(json['error']['duplicate']);
+                            location = json['redirect'];
                         } else {
                             grecaptcha.reset();
                             alert(json['error']);
                         }
                     } else if (json['redirect']) {
                         location = json['redirect'];
+                    } else {
+                        alert('{{ error_invalid }}');
+                        location = "{{ redirect }}";
                     }
                 }
             });

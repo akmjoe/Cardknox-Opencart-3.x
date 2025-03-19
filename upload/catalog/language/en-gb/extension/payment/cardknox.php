@@ -24,3 +24,7 @@ $_['error_prefix']		   = 'Credit card error: ';
 $_['error_unknown']		   = 'Credit card error: An unknown Error has occured, please try again.';
 $_['error_card']		   = 'There was an error processing your card, please try again.';
 $_['error_address']		   = 'Billing address does not match credit card! Please correct card billing address or use PayPal.';
+$_['error_lockout']		   = 'Too many failed credit card attempts! Please use PayPal instead.';
+$_['error_duplicate']	   = 'Duplicate order - your order has already been submitted!';
+$_['error_no_order']	   = 'No order to submit! Your order may have already been submitted, please check your email for an order confirmation.';
+$_['error_invalid']	       = 'Invalid response from server! Your order may have been placed, please check your email for a confirmation.';
