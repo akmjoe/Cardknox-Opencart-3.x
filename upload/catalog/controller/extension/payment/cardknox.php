@@ -59,6 +59,12 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		} else {
 			$data['captcha'] = '';
 		}
+		/**************** Add error redirect url *****************************/
+		if($this->customer->isLogged()) {
+			$data['redirect'] = $this->url->link('account/order', '', true);
+		} else {
+			$data['redirect'] = $this->url->link('checkout/cart', '', true);
+		}
 		/**************** Add random string to prevent multi submit ****************/
 		$this->session->data['random'] = base64_encode(random_bytes(10));
 		$data['random'] = $this->session->data['random'];
@@ -94,6 +100,16 @@ class ControllerExtensionPaymentCardknox extends Controller {
 			$attempts = $this->model_extension_credit_card_cardknox->getAttempts($ip, $date);
 			if((int)$this->config->get('payment_cardknox_brute_count') && $attempts >= (int)$this->config->get('payment_cardknox_brute_count')) {
 				$json['error'] = $this->language->get('error_lockout');// notify customers lockout
+			}
+		}
+		// Check for order ID
+		if(!isset($this->session->data['order_id']) || !(int)$this->session->data['order_id']) {
+			if(isset($this->session->data['duplicate_check'])) {
+				$json['error']['duplicate'] = $this->language->get('error_duplicate');// notify customers duplicate
+				$json['redirect '] = $this->url->link('checkout/success', '', true);
+			} else {
+				$json['error']['duplicate'] = $this->language->get('error_no_order');// notify customers no order
+				$json['redirect '] = $this->url->link('account/order', '', true);
 			}
 		}
 		/*********************** Now save address ****************************/
@@ -190,9 +206,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 			curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 			curl_setopt($curl, CURLOPT_POST, 1);
 			curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data, '', '&'));
-
 			$apiResponse = curl_exec($curl);
-
 			if (curl_error($curl)) {
 				$json['error'] = 'CURL ERROR: ' . curl_errno($curl) . '::' . curl_error($curl);
 
