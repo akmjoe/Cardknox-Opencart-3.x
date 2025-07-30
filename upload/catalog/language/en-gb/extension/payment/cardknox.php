@@ -28,3 +28,4 @@ $_['error_lockout']		   = 'Too many failed credit card attempts! Please use PayP
 $_['error_duplicate']	   = 'Duplicate order - your order has already been submitted!';
 $_['error_no_order']	   = 'No order to submit! Your order may have already been submitted, please check your email for an order confirmation.';
 $_['error_invalid']	       = 'Invalid response from server! Your order may have been placed, please check your email for a confirmation.';
+$_['error_mismatch']	   = 'Shipping address does not match billing address! Please change the shipping address to the same as billing address, or use PayPal for payment.';

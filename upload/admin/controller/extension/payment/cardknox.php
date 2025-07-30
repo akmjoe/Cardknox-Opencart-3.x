@@ -137,6 +137,22 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		} else {
 			$data['payment_cardknox_brute_count'] = $this->config->get('payment_cardknox_brute_count');
 		}
+				
+		$this->load->model('customer/customer_group');
+
+		$data['customer_groups'] = $this->model_customer_customer_group->getCustomerGroups();
+		
+		if (isset($this->request->post['payment_cardknox_address'])) {
+			$data['payment_cardknox_address'] = $this->request->post['payment_cardknox_address'];
+		} else {
+			$data['payment_cardknox_address'] = $this->config->get('payment_cardknox_address');
+		}
+		
+		if (isset($this->request->post['payment_cardknox_guest'])) {
+			$data['payment_cardknox_guest'] = $this->request->post['payment_cardknox_guest'];
+		} else {
+			$data['payment_cardknox_guest'] = $this->config->get('payment_cardknox_guest');
+		}
 		
 		if (isset($this->request->post['payment_cardknox_status'])) {
 			$data['payment_cardknox_status'] = $this->request->post['payment_cardknox_status'];

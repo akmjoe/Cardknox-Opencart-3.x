@@ -12,6 +12,12 @@ $_['text_capture']          = 'Capture';
 $_['text_always']			= 'Always save cards';
 $_['text_never']			= 'Never save cards';
 $_['text_customer']			= 'Customer\'s Choice';
+$_['text_guest']			= 'Guest';
+// For address matching
+$_['text_allow']				= 'Allow All';
+$_['text_country']				= 'Same Country only';
+$_['text_state']				= 'Same State only';
+$_['text_strict']				= 'Exact match';
 // Entry
 $_['entry_transaction_key'] = 'Cardknox Transaction Key';
 $_['entry_token_key']       = 'Cardknox Token Key';
@@ -27,11 +33,14 @@ $_['entry_debug']           = 'Debug Mode';
 $_['entry_fraud']           = 'Fraud Detection Total';
 $_['entry_brute_time']      = 'Lockout time (hours)';
 $_['entry_brute_count']     = 'Lockout attempts';
+$_['entry_guest']			= 'Allow Guest Checkout';
+$_['entry_address']			= 'Address Matching';
 
 // Help
 $_['help_total']            = 'The checkout total the order must reach before this payment method becomes active.';
 $_['help_card_save']		= 'Whether or not to save credit card. When using split checkout, the card will always be saved regardless of setting';
 $_['help_fraud']			= 'Transactions above this threshold will use FraudWatch transaction checking';
+$_['help_address']			= 'Allow mismatched billing/shipping address';
 
 // Error
 $_['error_permission']      = 'Warning: You do not have permission to modify payment Cardknox!';

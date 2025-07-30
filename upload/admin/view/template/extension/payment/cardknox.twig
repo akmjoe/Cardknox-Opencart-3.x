@@ -130,6 +130,37 @@
             </div>
           </div>
           <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-guest">{{ entry_guest }}</label>
+            <div class="col-sm-10">
+              <select name="payment_cardknox_guest" id="input-guest" class="form-control">
+                <option value="0"{% if payment_cardknox_guest == 0 %} selected="selected"{% endif %}>{{ text_no }}</option>
+                <option value="1"{% if payment_cardknox_guest == 1 %} selected="selected"{% endif %}>{{ text_yes }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+              <label class="col-sm-2 control-label" for="input-address-0"><span data-toggle="tooltip" title="{{ help_address }}">{{ entry_address }} {{ text_guest }}</span></label>
+            <div class="col-sm-10">
+              <select name="payment_cardknox_address[0]" id="input-address-0" class="form-control">
+                <option value="0"{% if payment_cardknox_address[0] == 0 %} selected="selected"{% endif %}>{{ text_allow }}</option>
+                <option value="1"{% if payment_cardknox_address[0] == 1 %} selected="selected"{% endif %}>{{ text_country }}</option>
+                <option value="2"{% if payment_cardknox_address[0] == 2 %} selected="selected"{% endif %}>{{ text_state }}</option>
+                <option value="3"{% if payment_cardknox_address[0] == 3 %} selected="selected"{% endif %}>{{ text_strict }}</option>
+              </select>
+            </div>
+          </div>
+          {% for group in customer_groups %}
+          <div class="form-group">
+              <label class="col-sm-2 control-label" for="input-address-{{ group.customer_group_id }}"><span data-toggle="tooltip" title="{{ help_address }}">{{ entry_address }} {{ group.name }}</span></label>
+            <div class="col-sm-10">
+              <select name="payment_cardknox_address[{{ group.customer_group_id }}]" id="input-address-{{ group.customer_group_id }}" class="form-control">
+                <option value="0"{% if payment_cardknox_address[group.customer_group_id] == 0 %} selected="selected"{% endif %}>{{ text_allow }}</option>
+                <option value="3"{% if payment_cardknox_address[group.customer_group_id] == 3 %} selected="selected"{% endif %}>{{ text_strict }}</option>
+              </select>
+            </div>
+          </div>
+          {% endfor %}
+          <div class="form-group">
             <label class="col-sm-2 control-label" for="input-status">{{ entry_status }}</label>
             <div class="col-sm-10">
               <select name="payment_cardknox_status" id="input-status" class="form-control">
