@@ -30,6 +30,14 @@ class ModelExtensionPaymentCardknox extends Model {
 		if((int)$this->config->get('payment_cardknox_brute_count') && $attempts >= (int)$this->config->get('payment_cardknox_brute_count')) {
 			$status = false;
 		}
+		// now check for address match settings
+		if(!$this->customer->isLogged() && !$this->config->get('payment_cardknox_guest')) {
+			// guest not allowed
+			$status = false;
+		}
+		if(!$this->address_check($address)) {
+			$status = false;
+		}
 
 		$method_data = array();
 
@@ -43,6 +51,61 @@ class ModelExtensionPaymentCardknox extends Model {
 		}
 
 		return $method_data;
+	}
+	
+	public function address_check($billing = null, $shipping = null) {
+		if(!is_array($billing)) {
+			$billing = $this->session->data['billing_address'];
+		}
+		if(!is_array($shipping)) {
+			$shipping = $this->session->data['shipping_address'];
+		}
+		$status = true;
+		
+		$group = (int)$this->customer->getGroupId();
+		$match = $this->config->get('payment_cardknox_address');
+		if($this->config->get('payment_cardknox_debug')) {
+			$this->log->write('Cardknox checking address match for customer group '.$group.' check type '.$match[$group]);
+			//$this->log->write('Payment address:');
+			$this->log->write($billing);
+			//$this->log->write('Shipping address:');
+			$this->log->write($shipping);
+		}
+		
+		switch($match[$group]) {// check address based on setting
+			case 3:// strict - exact match
+				$check = array('postcode', 'address_1', 'address_2');
+				foreach($check as $key) {
+					if(isset($billing[$key]) && isset($shipping[$key]) && $billing[$key] != $shipping[$key]) {
+						$status = false;
+						if($this->config->get('payment_cardknox_debug')) {
+							$this->log->write('Cardknox disbled due to '.$key.' mismatch (customer group '.$group.')');
+						}
+					}
+				}
+			case 2:// must be same state
+				$check = array('zone', 'zone_id','zone_code');
+				foreach($check as $key) {
+					if(isset($billing[$key]) && isset($shipping[$key]) && $billing[$key] != $shipping[$key]) {
+						$status = false;
+						if($this->config->get('payment_cardknox_debug')) {
+							$this->log->write('Cardknox disbled due to '.$key.' mismatch (customer group '.$group.')');
+						}
+					}
+				}
+			case 1:// must be same country
+				$check = array('country', 'country_id', 'iso_code_2', 'iso_code_3');
+				foreach($check as $key) {
+					if(isset($billing[$key]) && isset($shipping[$key]) && $billing[$key] != $shipping[$key]) {
+						$status = false;
+						if($this->config->get('payment_cardknox_debug')) {
+							$this->log->write('Cardknox disbled due to '.$key.' mismatch (customer group '.$group.')');
+						}
+					}
+				}
+			default:// no checking
+		}
+		return $status;
 	}
 	
 	public function saveTransaction($order_id, $data, $card_id = 0) {

@@ -112,6 +112,13 @@ class ControllerExtensionPaymentCardknox extends Controller {
 				$json['redirect '] = $this->url->link('account/order', '', true);
 			}
 		}
+		// check address match
+		$this->load->model('extension/payment/cardknox');
+		$billing = array('postcode' => html_entity_decode($this->request->post['address_1'], ENT_QUOTES, 'UTF-8'), 'postcode' => html_entity_decode($this->request->post['cc_zip'], ENT_QUOTES, 'UTF-8'));
+		if(!$this->model_extension_payment_cardknox->address_check($billing)) {
+			// address mismatch not allowed
+			$json['error'] = $this->language->get('error_mismatch');
+		}
 		/*********************** Now save address ****************************/
 		if(!isset($json['error'])) {
 			$this->load->model('checkout/order');
@@ -197,7 +204,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 			}
 		}
 		/******************* Process card **********************/
-		if(!isset($json['error']) && isset($data['xToken']) && $data['xToken']) {
+		if(false && !isset($json['error']) && isset($data['xToken']) && $data['xToken']) {
 			// log request data
 			$replacements = array('xKey' => "******", 'xCardNum' => "******", 'xCVV' => "******");
 			$this->logger(array_replace($data, $replacements));
