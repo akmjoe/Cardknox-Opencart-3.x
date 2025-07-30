@@ -204,7 +204,7 @@ class ControllerExtensionPaymentCardknox extends Controller {
 			}
 		}
 		/******************* Process card **********************/
-		if(false && !isset($json['error']) && isset($data['xToken']) && $data['xToken']) {
+		if(!isset($json['error']) && isset($data['xToken']) && $data['xToken']) {
 			// log request data
 			$replacements = array('xKey' => "******", 'xCardNum' => "******", 'xCVV' => "******");
 			$this->logger(array_replace($data, $replacements));
