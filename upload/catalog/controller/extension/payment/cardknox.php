@@ -114,7 +114,9 @@ class ControllerExtensionPaymentCardknox extends Controller {
 		}
 		// check address match
 		$this->load->model('extension/payment/cardknox');
-		$billing = array('postcode' => html_entity_decode($this->request->post['address_1'], ENT_QUOTES, 'UTF-8'), 'postcode' => html_entity_decode($this->request->post['cc_zip'], ENT_QUOTES, 'UTF-8'));
+		$billing = array(
+                    'address_1' => (isset($this->request->post['address_1'])?html_entity_decode($this->request->post['address_1'], ENT_QUOTES, 'UTF-8'):''),
+                    'postcode' => isset($this->request->post['cc_zip'])?(html_entity_decode($this->request->post['cc_zip'], ENT_QUOTES, 'UTF-8')):'');
 		if(!$this->model_extension_payment_cardknox->address_check($billing)) {
 			// address mismatch not allowed
 			$json['error'] = $this->language->get('error_mismatch');
