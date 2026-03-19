@@ -55,10 +55,10 @@ class ModelExtensionPaymentCardknox extends Model {
 	
 	public function address_check($billing = null, $shipping = null) {
 		if(!is_array($billing)) {
-			$billing = $this->session->data['billing_address'];
+			$billing = isset($this->session->data['billing_address'])?$this->session->data['billing_address']:array();
 		}
 		if(!is_array($shipping)) {
-			$shipping = $this->session->data['shipping_address'];
+			$shipping = isset($this->session->data['shipping_address'])?$this->session->data['shipping_address']:array();
 		}
 		$status = true;
 		
